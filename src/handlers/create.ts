@@ -1,6 +1,7 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
+import { z } from 'zod';
 import { createShortUrlCode } from '../lib/dynamo';
-import { ShortCodeCollisionError } from '../types';
+import { CreateRequestSchema, ShortCodeCollisionError } from '../types';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
 
@@ -11,11 +12,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         };
     }
 
-    let longUrl: string;
+    let parsed: z.infer<typeof CreateRequestSchema>;
 
     try {
-        const body = JSON.parse(event.body);
-        longUrl = body.longUrl;
+        parsed = CreateRequestSchema.parse(JSON.parse(event.body));
     } catch (error: unknown) {
         if (error instanceof SyntaxError) {
             return {
@@ -23,19 +23,17 @@ export const handler: APIGatewayProxyHandler = async (event) => {
                 body: JSON.stringify({ error: "Invalid JSON body" })
             };
         }
-
+        if (error instanceof z.ZodError) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: error.issues[0].message })
+            };
+        }
         throw error;
     }
 
-    if (!longUrl) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: "longUrl is required" })
-        };
-    }
-
     try {
-        const shortUrlCode = await createShortUrlCode(longUrl);
+        const shortUrlCode = await createShortUrlCode(parsed.longUrl);
 
         return {
             statusCode: 201,
