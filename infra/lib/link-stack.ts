@@ -20,6 +20,7 @@ export class UrlShortenerStack extends cdk.Stack {
         const lambdaDefaults = {
             runtime: Runtime.NODEJS_24_X,
             code: Code.fromAsset(path.join(process.cwd(), 'dist')),
+            timeout: cdk.Duration.seconds(10),
             environment: {
                 TABLE_NAME: urlTable.tableName
             }
