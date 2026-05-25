@@ -8,7 +8,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     if (!event.body) {
         return {
             statusCode: 400,
-            body: JSON.stringify({ error: "Request body is required" })
+            body: JSON.stringify({ error: 'Request body is required' })
         };
     }
 
@@ -20,7 +20,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         if (error instanceof SyntaxError) {
             return {
                 statusCode: 400,
-                body: JSON.stringify({ error: "Invalid JSON body" })
+                body: JSON.stringify({ error: 'Invalid JSON body' })
             };
         }
         if (error instanceof z.ZodError) {
@@ -52,7 +52,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "Unknown error" })
+            body: JSON.stringify({ error: 'Unknown error' })
         };
     }
 }

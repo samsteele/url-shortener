@@ -3,7 +3,7 @@ import { UrlShortenerStack } from '../lib/link-stack';
 
 const app = new cdk.App();
 
-new UrlShortenerStack(app, "UrlShortenerStack", {
+new UrlShortenerStack(app, 'UrlShortenerStack', {
     env: {
         account: process.env.CDK_DEFAULT_ACCOUNT,
         region: process.env.CDK_DEFAULT_REGION,

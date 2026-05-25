@@ -1,7 +1,7 @@
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { ShortCodeCollisionError, UrlItem } from "../types";
-import { generateShortCode } from "./shortCodeGenerator";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { ShortCodeCollisionError, UrlItem } from '../types';
+import { generateShortCode } from './shortCodeGenerator';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
@@ -25,10 +25,10 @@ export async function createShortUrlCode(longUrl: string, attempts: number = 0):
         await docClient.send(new PutCommand({
             TableName: TABLE_NAME,
             Item: item,
-            ConditionExpression: "attribute_not_exists(shortCode)"
+            ConditionExpression: 'attribute_not_exists(shortCode)'
         }));
     } catch (error: unknown) {
-        if (error instanceof Error && error.name === "ConditionalCheckFailedException") {
+        if (error instanceof Error && error.name === 'ConditionalCheckFailedException') {
             return createShortUrlCode(longUrl, ++attempts);
         }
         throw error;

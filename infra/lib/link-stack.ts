@@ -9,12 +9,12 @@ export class UrlShortenerStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
-        const urlTable = new Table(this, "UrlTable", {
-            partitionKey: { name: "shortCode", type: AttributeType.STRING },
-            timeToLiveAttribute: "ttl",
+        const urlTable = new Table(this, 'UrlTable', {
+            partitionKey: { name: 'shortCode', type: AttributeType.STRING },
+            timeToLiveAttribute: 'ttl',
             billingMode: BillingMode.PAY_PER_REQUEST,
             deletionProtection: true,
-            tableName: "url-shortener-table"
+            tableName: 'url-shortener-table'
         });
 
         const lambdaDefaults = {
@@ -26,16 +26,16 @@ export class UrlShortenerStack extends cdk.Stack {
             }
         }
 
-        const createFunction = new Function(this, "CreateUrl", {
+        const createFunction = new Function(this, 'CreateUrl', {
             ...lambdaDefaults,
-            functionName: "create",
-            handler: "handlers/create.handler"
+            functionName: 'create',
+            handler: 'handlers/create.handler'
         });
 
-        const redirectFunction = new Function(this, "RedirectUrl", {
+        const redirectFunction = new Function(this, 'RedirectUrl', {
             ...lambdaDefaults,
-            functionName: "redirect",
-            handler: "handlers/redirect.handler"
+            functionName: 'redirect',
+            handler: 'handlers/redirect.handler'
         });
 
         urlTable.grantWriteData(createFunction);
