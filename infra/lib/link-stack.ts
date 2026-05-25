@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 import { Runtime, Code, Function } from 'aws-cdk-lib/aws-lambda';
-import { RestApi, LambdaIntegration } from 'aws-cdk-lib/aws-apigateway';
+import { RestApi, LambdaIntegration, UsagePlan } from 'aws-cdk-lib/aws-apigateway';
 import path from 'node:path';
 
 export class UrlShortenerStack extends cdk.Stack {
@@ -49,5 +49,14 @@ export class UrlShortenerStack extends cdk.Stack {
 
         api.root.addResource('{shortCode}')
             .addMethod('GET', new LambdaIntegration(redirectFunction));
+
+        const usagePlan = new UsagePlan(this, 'UsagePlan', {
+            throttle: {
+                rateLimit: 10,
+                burstLimit: 20,
+            },
+        });
+
+        usagePlan.addApiStage({ stage: api.deploymentStage });
     }
 }
