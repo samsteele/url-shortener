@@ -37,11 +37,12 @@ export async function createShortUrlCode(longUrl: string, attempts: number = 0):
     return item.shortCode;    
 }
 
-export async function getUrlFromShortCode(shortCode: string): Promise<string> {
+export async function getUrlFromShortCode(shortCode: string): Promise<string | null> {
     const result = await docClient.send(new GetCommand({
         TableName: TABLE_NAME,
         Key: { shortCode }
     }))
 
-    return (result.Item as UrlItem)?.longUrl ?? null;
+    const longUrl = result.Item?.longUrl;
+    return typeof longUrl === 'string' ? longUrl : null;
 }
