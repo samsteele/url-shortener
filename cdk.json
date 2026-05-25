@@ -1,0 +1,3 @@
+{
+    "app": "npx ts-node -P infra/tsconfig.json infra/bin/app.ts"
+}
