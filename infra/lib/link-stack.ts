@@ -1,13 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
-import { Runtime, Code, Function } from 'aws-cdk-lib/aws-lambda';
-import { RestApi, LambdaIntegration, UsagePlan } from 'aws-cdk-lib/aws-apigateway';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { RestApi, LambdaIntegration, UsagePlan, EndpointType, SecurityPolicy } from 'aws-cdk-lib/aws-apigateway';
 import path from 'node:path';
+import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 
 export class UrlShortenerStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
+
+        const subdomain: string = 'link.samsteele.co.uk';
 
         const urlTable = new Table(this, 'UrlTable', {
             partitionKey: { name: 'shortCode', type: AttributeType.STRING },
@@ -19,23 +23,22 @@ export class UrlShortenerStack extends cdk.Stack {
 
         const lambdaDefaults = {
             runtime: Runtime.NODEJS_24_X,
-            code: Code.fromAsset(path.join(process.cwd(), 'dist')),
             timeout: cdk.Duration.seconds(10),
             environment: {
                 TABLE_NAME: urlTable.tableName
             }
         }
 
-        const createFunction = new Function(this, 'CreateUrl', {
+        const createFunction = new NodejsFunction(this, 'CreateUrl', {
             ...lambdaDefaults,
             functionName: 'create',
-            handler: 'handlers/create.handler'
+            entry: path.join(process.cwd(), 'src/handlers/create.ts')
         });
 
-        const redirectFunction = new Function(this, 'RedirectUrl', {
+        const redirectFunction = new NodejsFunction(this, 'RedirectUrl', {
             ...lambdaDefaults,
             functionName: 'redirect',
-            handler: 'handlers/redirect.handler'
+            entry: path.join(process.cwd(), 'src/handlers/redirect.ts')
         });
 
         urlTable.grantWriteData(createFunction);
@@ -59,5 +62,18 @@ export class UrlShortenerStack extends cdk.Stack {
         });
 
         usagePlan.addApiStage({ stage: api.deploymentStage });
+
+        const cert = new Certificate(this, 'Certificate', {
+            domainName: subdomain,
+            certificateName: 'Link',
+            validation: CertificateValidation.fromDns()
+        });
+
+        api.addDomainName('CustomDomain', {
+            domainName: subdomain,
+            certificate: cert,
+            endpointType: EndpointType.REGIONAL,
+            securityPolicy: SecurityPolicy.TLS_1_2,
+        });
     }
 }

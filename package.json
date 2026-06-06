@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
-    "build": "tsc"
+    "build": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +28,7 @@
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
     "aws-cdk": "^2.1124.1",
+    "esbuild": "^0.28.0",
     "eslint": "^10.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
