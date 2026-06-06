@@ -3,15 +3,19 @@ import { Construct } from 'constructs';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { RestApi, LambdaIntegration, UsagePlan, EndpointType, SecurityPolicy } from 'aws-cdk-lib/aws-apigateway';
+import { RestApi, LambdaIntegration, EndpointType, SecurityPolicy } from 'aws-cdk-lib/aws-apigateway';
 import path from 'node:path';
 import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 
+export interface UrlShortenerStackProps extends cdk.StackProps {
+    domainName: string;
+}
+
 export class UrlShortenerStack extends cdk.Stack {
-    constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    constructor(scope: Construct, id: string, props: UrlShortenerStackProps) {
         super(scope, id, props);
 
-        const subdomain: string = 'link.samsteele.co.uk';
+        const { domainName } = props;
 
         const urlTable = new Table(this, 'UrlTable', {
             partitionKey: { name: 'shortCode', type: AttributeType.STRING },
@@ -32,7 +36,11 @@ export class UrlShortenerStack extends cdk.Stack {
         const createFunction = new NodejsFunction(this, 'CreateUrl', {
             ...lambdaDefaults,
             functionName: 'create',
-            entry: path.join(process.cwd(), 'src/handlers/create.ts')
+            entry: path.join(process.cwd(), 'src/handlers/create.ts'),
+            environment: {
+                ...lambdaDefaults.environment,
+                BASE_URL: `https://${domainName}`
+            }
         });
 
         const redirectFunction = new NodejsFunction(this, 'RedirectUrl', {
@@ -46,6 +54,10 @@ export class UrlShortenerStack extends cdk.Stack {
 
         const api = new RestApi(this, 'UrlShortenerApi', {
             restApiName: 'URL Shortener',
+            deployOptions: {
+                throttlingRateLimit: 10,
+                throttlingBurstLimit: 20,
+            },
         });
 
         api.root.addResource('urls')
@@ -54,23 +66,14 @@ export class UrlShortenerStack extends cdk.Stack {
         api.root.addResource('{shortCode}')
             .addMethod('GET', new LambdaIntegration(redirectFunction));
 
-        const usagePlan = new UsagePlan(this, 'UsagePlan', {
-            throttle: {
-                rateLimit: 10,
-                burstLimit: 20,
-            },
-        });
-
-        usagePlan.addApiStage({ stage: api.deploymentStage });
-
         const cert = new Certificate(this, 'Certificate', {
-            domainName: subdomain,
+            domainName,
             certificateName: 'Link',
             validation: CertificateValidation.fromDns()
         });
 
         api.addDomainName('CustomDomain', {
-            domainName: subdomain,
+            domainName,
             certificate: cert,
             endpointType: EndpointType.REGIONAL,
             securityPolicy: SecurityPolicy.TLS_1_2,

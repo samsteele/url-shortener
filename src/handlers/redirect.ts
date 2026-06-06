@@ -22,7 +22,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         }
 
         return {
-            statusCode: 301,
+            statusCode: 302,
             headers: { Location: longUrl },
             body: '',
         };

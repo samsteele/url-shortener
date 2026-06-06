@@ -37,7 +37,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
         return {
             statusCode: 201,
-            body: JSON.stringify({ shortUrlCode })
+            body: JSON.stringify({ shortUrl: `${process.env.BASE_URL}/${shortUrlCode}` })
         };
     } catch (error: unknown) {
 
