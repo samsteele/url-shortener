@@ -40,7 +40,7 @@ const PAGE = `<!doctype html>
         <h1>Shorten a link</h1>
         <p class="sub">Paste a URL and get a short link.</p>
         <form id="form">
-            <input id="url" type="url" name="url" placeholder="https://example.com/very/long/path" required autofocus>
+            <input id="url" type="text" inputmode="url" name="url" required autofocus>
             <button id="submit" type="submit">Shorten</button>
         </form>
         <div id="result"></div>
