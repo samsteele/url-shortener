@@ -49,16 +49,29 @@ export class UrlShortenerStack extends cdk.Stack {
             entry: path.join(process.cwd(), 'src/handlers/redirect.ts')
         });
 
+        const frontendFunction = new NodejsFunction(this, 'Frontend', {
+            runtime: Runtime.NODEJS_24_X,
+            timeout: cdk.Duration.seconds(10),
+            functionName: 'frontend',
+            entry: path.join(process.cwd(), 'src/handlers/frontend.ts')
+        });
+
         urlTable.grantWriteData(createFunction);
         urlTable.grantReadData(redirectFunction);
 
         const api = new RestApi(this, 'UrlShortenerApi', {
             restApiName: 'URL Shortener',
             deployOptions: {
-                throttlingRateLimit: 10,
-                throttlingBurstLimit: 20,
+                methodOptions: {
+                    // Tightly bound the unauthenticated write path...
+                    '/urls/POST': { throttlingRateLimit: 2, throttlingBurstLimit: 5 },
+                    // ...while leaving reads (redirects, frontend) roomy.
+                    '/*/*': { throttlingRateLimit: 20, throttlingBurstLimit: 40 },
+                },
             },
         });
+
+        api.root.addMethod('GET', new LambdaIntegration(frontendFunction));
 
         api.root.addResource('urls')
             .addMethod('POST', new LambdaIntegration(createFunction));
